@@ -4,74 +4,265 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Reporte SOS</title>
+  <meta name="color-scheme" content="light dark">
   <style>
-    body{font-family:system-ui;max-width:600px;margin:20px auto;padding:0 12px}
-    label{display:block;margin:8px 0 4px}
-    input,select,button{width:100%;padding:10px;margin-bottom:10px}
-    #msg{margin-top:15px;font-weight:bold}
+    :root{--fg:#111;--bg:#fff;--accent:#277771;--muted:#666;--error:#b00020;--ok:#0a7d2f}
+    @media (prefers-color-scheme: dark){
+      :root{--fg:#eee;--bg:#111;--muted:#aaa}
+      input,select,button,textarea{background:#1b1b1b;color:var(--fg);border-color:#333}
+    }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Arial,sans-serif;background:var(--bg);color:var(--fg);max-width:640px;margin:24px auto;padding:0 16px;line-height:1.35}
+    h1{font-size:1.4rem;margin:.5rem 0 1rem}
+    form{border:1px solid #e6e6e6;border-radius:12px;padding:16px}
+    label{display:block;margin:10px 0 6px;font-weight:600}
+    .req::after{content:" *";color:var(--accent);font-weight:700}
+    input,select,button,textarea{
+      width:100%;padding:12px;border:1px solid #d7d7d7;border-radius:10px;outline:none;
+    }
+    input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in oklab, var(--accent) 25%, transparent)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .hint{font-size:.85rem;color:var(--muted);margin-top:4px}
+    .actions{display:flex;gap:10px;align-items:center;margin-top:8px}
+    .actions button{flex:1}
+    .ghost{background:transparent;border-style:dashed}
+    .badge{display:inline-block;font-size:.78rem;padding:4px 8px;border-radius:999px;border:1px solid #e6e6e6;color:var(--muted)}
+    #msg{margin-top:14px;font-weight:600}
+    .ok{color:var(--ok)}
+    .err{color:var(--error)}
+    .muted{color:var(--muted)}
+    .maplink{margin-top:6px;display:inline-block}
+    .sr-only{position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden}
+    .footer{margin-top:14px;font-size:.85rem;color:var(--muted)}
+    .spinner{inline-size:1em;block-size:1em;border:.18em solid #ccc;border-right-color:transparent;border-radius:50%;display:inline-block;vertical-align:-.2em;animation:s 0.8s linear infinite}
+    @keyframes s{to{transform:rotate(1turn)}}
   </style>
 </head>
 <body>
-  <h2>Reportar evento SOS</h2>
-  <form id="f">
-    <label>Nombre</label>
-    <input id="nombre" placeholder="Tu nombre">
+  <h1>Reportar evento SOS</h1>
 
-    <label>Teléfono</label>
-    <input id="telefono" type="tel" placeholder="+595..." required>
+  <p class="hint">Comparte tu ubicación para enviar ayuda más rápido. Tus datos se usarán solo para gestionar este reporte.</p>
 
-    <label>Tipo de evento</label>
-    <select id="tipo" required>
+  <form id="f" novalidate aria-describedby="formHint">
+    <div class="sr-only" id="formHint">Todos los campos marcados con * son obligatorios.</div>
+
+    <label for="nombre">Nombre</label>
+    <input id="nombre" name="nombre" placeholder="Tu nombre" autocomplete="name" inputmode="text" maxlength="80"/>
+
+    <label for="telefono" class="req">Teléfono (Paraguay)</label>
+    <input id="telefono" name="telefono" type="tel" placeholder="+595..." autocomplete="tel"
+           required pattern="^(\+?595|0)?\s?\d{6,11}$" aria-describedby="telHint">
+    <div class="hint" id="telHint">Ejemplo: +595 981 123 456</div>
+
+    <label for="tipo" class="req">Tipo de evento</label>
+    <select id="tipo" name="tipo" required>
       <option value="">Selecciona…</option>
       <option>Accidente</option>
       <option>Falla de auto</option>
       <option>Arrollamiento</option>
+      <option>Otro</option>
     </select>
 
-    <label>Ubicación automática (Permitir acceso a Ubicación)</label>
-    <input id="lat" placeholder="Latitud" readonly>
-    <input id="lng" placeholder="Longitud" readonly>
+    <label for="detalle">Detalle (opcional)</label>
+    <textarea id="detalle" name="detalle" rows="3" placeholder="Describe brevemente lo ocurrido (máx. 300 caracteres)" maxlength="300"></textarea>
 
-    <button type="submit">Enviar</button>
+    <div class="actions">
+      <button type="button" id="btnUbic">📍 Obtener ubicación</button>
+      <span id="gpsStatus" class="badge">GPS: sin capturar</span>
+    </div>
+
+    <div class="row" aria-live="polite">
+      <div>
+        <label for="lat">Latitud (auto)</label>
+        <input id="lat" name="lat" placeholder="Latitud" readonly inputmode="numeric">
+      </div>
+      <div>
+        <label for="lng">Longitud (auto)</label>
+        <input id="lng" name="lng" placeholder="Longitud" readonly inputmode="numeric">
+      </div>
+    </div>
+
+    <a id="mapaLink" class="maplink muted" href="#" target="_blank" rel="noopener" hidden>Ver ubicación en Google Maps ↗</a>
+
+    <div class="actions">
+      <button type="submit" id="btnEnviar">Enviar</button>
+      <button type="reset" class="ghost" id="btnLimpiar">Limpiar</button>
+    </div>
+
+    <p id="msg" role="status" aria-live="polite"></p>
+    <input type="hidden" id="requestId">
+    <input type="hidden" id="timestamp">
   </form>
 
-  <p id="msg"></p>
+  <p class="footer">Si el formulario falla, llama al <strong>+595 XXX XXX</strong> o escribe por WhatsApp.</p>
 
   <script>
-    const endpoint = "PEGAR_AQUI_URL_DEL_FLOW_DE_POWER_AUTOMATE";
+  // === CONFIG ===
+  const endpoint = "PEGAR_AQUI_URL_DEL_FLOW_DE_POWER_AUTOMATE"; // endpoint HTTP request trigger (POST JSON)
+  const FETCH_TIMEOUT_MS = 12000; // 12s
+  const GPS_TIMEOUT_MS = 10000;   // 10s
+  const GPS_MAX_AGE_MS = 15000;
 
-    // Capturar ubicación
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(function(pos){
-        document.getElementById('lat').value = pos.coords.latitude.toFixed(6);
-        document.getElementById('lng').value = pos.coords.longitude.toFixed(6);
-      });
+  // === HELPERS ===
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => document.querySelectorAll(sel);
+  const f = $('#f');
+  const btnEnviar = $('#btnEnviar');
+  const btnUbic = $('#btnUbic');
+  const msg = $('#msg');
+  const gpsStatus = $('#gpsStatus');
+  const mapaLink = $('#mapaLink');
+
+  function setMsg(text, kind=""){
+    msg.className = kind ? kind : "muted";
+    msg.textContent = text;
+  }
+
+  function setSendingState(sending){
+    btnEnviar.disabled = sending;
+    btnUbic.disabled = sending;
+    btnEnviar.innerHTML = sending ? '<span class="spinner"></span> Enviando…' : 'Enviar';
+  }
+
+  function uuid4(){
+    // RFC4122-ish
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c=>{
+      const r = crypto.getRandomValues(new Uint8Array(1))[0] & 15;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  function normalizePyPhone(raw){
+    // Normaliza a +595########
+    if(!raw) return "";
+    let s = raw.replace(/[^\d+]/g, '');
+    if(s.startsWith('0')) s = s.replace(/^0/, '+595');
+    if(!s.startsWith('+')) s = '+595' + s;
+    return s;
+  }
+
+  function updateMapLink(lat,lng){
+    if(lat && lng){
+      mapaLink.href = `https://www.google.com/maps?q=${lat},${lng}`;
+      mapaLink.hidden = false;
+      mapaLink.classList.remove('muted');
+    }else{
+      mapaLink.hidden = true;
+    }
+  }
+
+  // === GEOLOCATION ===
+  async function getLocation(){
+    if(!('geolocation' in navigator)){
+      gpsStatus.textContent = 'GPS: no disponible';
+      setMsg('Tu navegador no permite geolocalización.', 'err');
+      return;
+    }
+    gpsStatus.textContent = 'GPS: buscando…';
+    setMsg('Obteniendo ubicación…', 'muted');
+
+    const opts = { enableHighAccuracy: true, timeout: GPS_TIMEOUT_MS, maximumAge: GPS_MAX_AGE_MS };
+
+    const p = new Promise((resolve, reject)=>{
+      navigator.geolocation.getCurrentPosition(resolve, reject, opts);
+    });
+
+    try{
+      const ctrl = new AbortController();
+      const timer = setTimeout(()=>{ ctrl.abort(); }, GPS_TIMEOUT_MS + 1500);
+
+      const pos = await p; clearTimeout(timer);
+      const { latitude, longitude, accuracy } = pos.coords;
+      $('#lat').value = latitude.toFixed(6);
+      $('#lng').value = longitude.toFixed(6);
+      gpsStatus.textContent = `GPS: OK (±${Math.round(accuracy)} m)`;
+      updateMapLink($('#lat').value, $('#lng').value);
+      setMsg('Ubicación capturada correctamente.', 'ok');
+    }catch(err){
+      gpsStatus.textContent = 'GPS: error';
+      setMsg('No se pudo obtener tu ubicación (permiso denegado, señal débil o timeout). Puedes reintentar o enviar sin ubicación.', 'err');
+    }
+  }
+
+  btnUbic.addEventListener('click', getLocation);
+
+  // Intento automático al cargar
+  window.addEventListener('load', ()=>{ $('#requestId').value = uuid4(); $('#timestamp').value = new Date().toISOString(); getLocation(); });
+
+  // === SUBMIT ===
+  f.addEventListener('submit', async e=>{
+    e.preventDefault();
+
+    // Validación básica
+    const telefono = normalizePyPhone($('#telefono').value.trim());
+    const telOk = /^(\+?595)\d{6,11}$/.test(telefono);
+    if(!$('#tipo').value){
+      setMsg('Selecciona el tipo de evento.', 'err'); $('#tipo').focus(); return;
+    }
+    if(!$('#telefono').value || !telOk){
+      setMsg('Ingresa un teléfono válido de Paraguay (ej. +595 981 123 456).', 'err'); $('#telefono').focus(); return;
     }
 
-    // Enviar datos
-    document.getElementById('f').addEventListener('submit', async e=>{
-      e.preventDefault();
-      msg.textContent = "Enviando...";
-      const payload = {
-        nombre: nombre.value.trim(),
-        telefono: telefono.value.trim(),
-        tipoEvento: tipo.value,
-        lat: parseFloat(lat.value || 0),
-        lng: parseFloat(lng.value || 0)
-      };
-      try{
-        const res = await fetch(endpoint, {
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body: JSON.stringify(payload)
-        });
-        if(!res.ok) throw new Error("Error HTTP "+res.status);
-        msg.textContent = "¡Reporte enviado correctamente! La ayuda va en camino.";
-        f.reset(); lat.value=""; lng.value="";
-      }catch(err){
-        msg.textContent = "No se pudo enviar. Intente nuevamente.";
+    setSendingState(true);
+    setMsg('Preparando envío…');
+
+    const payload = {
+      requestId: $('#requestId').value || uuid4(),
+      timestamp: new Date().toISOString(),
+      nombre: $('#nombre').value.trim() || null,
+      telefono,
+      tipoEvento: $('#tipo').value,
+      detalle: $('#detalle').value.trim() || null,
+      lat: $('#lat').value ? parseFloat($('#lat').value) : null,
+      lng: $('#lng').value ? parseFloat($('#lng').value) : null,
+      userAgent: navigator.userAgent,
+      online: navigator.onLine
+    };
+
+    // fetch con timeout
+    const controller = new AbortController();
+    const to = setTimeout(()=>controller.abort(), FETCH_TIMEOUT_MS);
+
+    try{
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type":"application/json",
+          "X-Request-Id": payload.requestId
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+      clearTimeout(to);
+
+      if(!res.ok){
+        const text = await res.text().catch(()=> '');
+        throw new Error(`HTTP ${res.status}: ${text || 'sin detalle'}`);
       }
-    });
+
+      setMsg('¡Reporte enviado correctamente! La ayuda va en camino.', 'ok');
+      setSendingState(false);
+      f.reset();
+      $('#requestId').value = uuid4();
+      $('#timestamp').value = new Date().toISOString();
+      gpsStatus.textContent = 'GPS: sin capturar';
+      updateMapLink(null,null);
+
+    }catch(err){
+      clearTimeout(to);
+      setSendingState(false);
+      console.error(err);
+      setMsg('No se pudo enviar. Verifica tu conexión y reintenta. Si persiste, llama al número de emergencia.', 'err');
+    }
+  });
+
+  // Limpieza
+  $('#btnLimpiar').addEventListener('click', ()=>{
+    setMsg('Formulario limpiado.', 'muted');
+    gpsStatus.textContent = 'GPS: sin capturar';
+    updateMapLink(null,null);
+  });
   </script>
 </body>
 </html>
