@@ -111,13 +111,15 @@
     <p id="msg" role="status" aria-live="polite"></p>
     <input type="hidden" id="requestId">
     <input type="hidden" id="timestamp">
+    <!-- mapaUrl para enviar al flujo -->
+    <input type="hidden" id="mapaUrl">
   </form>
 
   <p class="footer">Si el formulario falla, llama al <strong>+595 XXX XXX</strong> o escribe por WhatsApp.</p>
 
   <script>
   // === CONFIG ===
-  const endpoint = "https://default688a0fce5571499b9b5a8fef12ae5c.08.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/540a67fb821042ce9a9c009ac064975c/triggers/manual/paths/invoke/?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=b3_sZEJJEMWiK_myP_QktIK34z9U2pcPjhTJX0GukK8"; // endpoint de Power Automate
+  const endpoint = "PEGAR_AQUI_URL_DEL_FLOW"; // tu endpoint de Power Automate
   const FETCH_TIMEOUT_MS = 12000;
   const GPS_TIMEOUT_MS = 10000;
   const GPS_MAX_AGE_MS = 15000;
@@ -136,6 +138,7 @@
   const tipoSel = $('#tipo');
   const grupoHeridos = $('#grupoHeridos');
   const heridosSel = $('#heridos');
+  const mapaUrlHidden = $('#mapaUrl');
 
   const HINTS = {
     '+595': '981 123 456',
@@ -166,7 +169,7 @@
   codeSelect.addEventListener('change', updatePhoneUI);
   telInput.addEventListener('input', updatePhoneUI);
 
-  // === Campo condicional "¿Hay heridos?" ===
+  // Campo condicional "¿Hay heridos?"
   function updateHeridos(){
     const esAccidente = (tipoSel.value.toLowerCase() === 'accidente');
     grupoHeridos.hidden = !esAccidente;
@@ -175,7 +178,7 @@
   }
   tipoSel.addEventListener('change', updateHeridos);
 
-  // === GEOLOCATION ===
+  // GEOLOCATION
   async function getLocation(){
     if(!('geolocation' in navigator)){ gpsStatus.textContent='GPS: no disponible'; setMsg('Tu navegador no permite geolocalización.','err'); return; }
     gpsStatus.textContent='GPS: buscando…'; setMsg('Obteniendo ubicación…','muted');
@@ -196,8 +199,16 @@
   }
 
   function updateMapLink(lat,lng){
-    if(lat && lng){ mapaLink.href=`https://www.google.com/maps?q=${lat},${lng}`; mapaLink.hidden=false; mapaLink.classList.remove('muted'); }
-    else{ mapaLink.hidden=true; }
+    if(lat && lng){
+      const url = `https://www.google.com/maps?q=${lat},${lng}`;
+      mapaLink.href = url;
+      mapaLink.hidden = false;
+      mapaLink.classList.remove('muted');
+      mapaUrlHidden.value = url; // guardar para enviar al flujo
+    }else{
+      mapaLink.hidden = true;
+      mapaUrlHidden.value = "";
+    }
   }
 
   btnUbic.addEventListener('click', getLocation);
@@ -211,11 +222,10 @@
     getLocation();
   });
 
-  // === SUBMIT ===
+  // SUBMIT
   f.addEventListener('submit', async e=>{
     e.preventDefault();
 
-    // Validaciones
     const localDigits = telInput.value.replace(/\D/g,'');
     if(!tipoSel.value){ setMsg('Selecciona el tipo de evento.','err'); tipoSel.focus(); return; }
     if(tipoSel.value.toLowerCase()==='accidente' && !heridosSel.value){
@@ -231,6 +241,9 @@
     const cc = codeSelect.value;
     const telefonoIntl = normalizePhone(localDigits, cc);
 
+    const latV = $('#lat').value ? parseFloat($('#lat').value) : null;
+    const lngV = $('#lng').value ? parseFloat($('#lng').value) : null;
+
     const payload = {
       requestId: $('#requestId').value || uuid4(),
       timestamp: new Date().toISOString(),
@@ -239,16 +252,16 @@
       telefonoLocal: localDigits,
       codigoPais: cc,
       tipoEvento: tipoSel.value,
-      hayHeridosTexto: heridosSel.value || null,
-      hayHeridos: heridosSel.value ? (heridosSel.value.toLowerCase()==='si') : null,
-      detalle: $('#detalle').value.trim() || null,
-      lat: $('#lat').value ? parseFloat($('#lat').value) : null,
-      lng: $('#lng').value ? parseFloat($('#lng').value) : null,
+      HayHeridosTexto: heridosSel.value || null, // si tu columna es de Texto
+      HayHeridos: heridosSel.value ? (heridosSel.value.toLowerCase()==='si') : null, // si usas Sí/No
+      detalle: $('#detalle').value.trim() || "", // opcional: cadena vacía mejor que null
+      lat: latV,
+      lng: lngV,
+      mapaUrl: mapaUrlHidden.value || "", // <-- link listo para SharePoint
       userAgent: navigator.userAgent,
       online: navigator.onLine
     };
 
-    // fetch con timeout
     const controller = new AbortController();
     const to = setTimeout(()=>controller.abort(), FETCH_TIMEOUT_MS);
 
