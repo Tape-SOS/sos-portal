@@ -54,7 +54,7 @@
         <option value="+595" selected>PY (+595)</option>
         <option value="+55">BR (+55)</option>
         <option value="+54">AR (+54)</option>
-        <option value="+598">UR (+598)</option>
+        <option value="+598">UY (+598)</option>
         <option value="+591">BO (+591)</option>
       </select>
       <input id="telefono" name="telefono" type="tel" placeholder="981 123 456" autocomplete="tel"
@@ -71,6 +71,16 @@
       <option>Problema mecánico</option>
       <option>Otro</option>
     </select>
+
+    <!-- Campo condicional: ¿Hay heridos? -->
+    <div id="grupoHeridos" hidden>
+      <label for="heridos" class="req">¿Hay heridos?</label>
+      <select id="heridos" name="heridos" aria-live="polite">
+        <option value="">Selecciona…</option>
+        <option>Si</option>
+        <option>No</option>
+      </select>
+    </div>
 
     <label for="detalle">Detalle (opcional)</label>
     <textarea id="detalle" name="detalle" rows="3" placeholder="Describe brevemente lo ocurrido (máx. 300 caracteres)" maxlength="300"></textarea>
@@ -107,7 +117,7 @@
 
   <script>
   // === CONFIG ===
-  const endpoint = "https://default688a0fce5571499b9b5a8fef12ae5c.08.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/540a67fb821042ce9a9c009ac064975c/triggers/manual/paths/invoke/?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=b3_sZEJJEMWiK_myP_QktIK34z9U2pcPjhTJX0GukK8"; // HTTP request trigger (POST JSON)
+  const endpoint = "https://default688a0fce5571499b9b5a8fef12ae5c.08.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/540a67fb821042ce9a9c009ac064975c/triggers/manual/paths/invoke/?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=b3_sZEJJEMWiK_myP_QktIK34z9U2pcPjhTJX0GukK8"; // endpoint de Power Automate
   const FETCH_TIMEOUT_MS = 12000;
   const GPS_TIMEOUT_MS = 10000;
   const GPS_MAX_AGE_MS = 15000;
@@ -123,11 +133,16 @@
   const telInput = $('#telefono');
   const codeSelect = $('#codPais');
   const phonePreview = $('#phonePreview');
+  const tipoSel = $('#tipo');
+  const grupoHeridos = $('#grupoHeridos');
+  const heridosSel = $('#heridos');
 
   const HINTS = {
     '+595': '981 123 456',
     '+55': '11 91234 5678',
-    '+54': '11 1234 5678'
+    '+54': '11 1234 5678',
+    '+598': '92 123 456',
+    '+591': '7 6123456'
   };
 
   function setMsg(text, kind=""){ msg.className = kind || "muted"; msg.textContent = text; }
@@ -135,7 +150,6 @@
   function uuid4(){ return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=crypto.getRandomValues(new Uint8Array(1))[0]&15;const v=c==='x'?r:(r&0x3|0x8);return v.toString(16);}); }
 
   function normalizePhone(local, cc){
-    // local: solo dígitos; quita 0 inicial común al marcar internacional
     let n = (local||'').replace(/\D/g,'').replace(/^0+/, '');
     return cc + n;
   }
@@ -144,7 +158,6 @@
     const cc = codeSelect.value;
     const example = HINTS[cc] || '981 123 456';
     if(!telInput.value) telInput.placeholder = example;
-    // Vista previa con el número actual
     const digits = telInput.value.replace(/\D/g,'').replace(/^0+/, '');
     const pretty = digits.replace(/(\d{3,4})(?=\d)/g,'$1 ').trim();
     phonePreview.textContent = cc + ' ' + (pretty || example);
@@ -152,6 +165,15 @@
 
   codeSelect.addEventListener('change', updatePhoneUI);
   telInput.addEventListener('input', updatePhoneUI);
+
+  // === Campo condicional "¿Hay heridos?" ===
+  function updateHeridos(){
+    const esAccidente = (tipoSel.value.toLowerCase() === 'accidente');
+    grupoHeridos.hidden = !esAccidente;
+    heridosSel.required = esAccidente;
+    if(!esAccidente){ heridosSel.value = ''; }
+  }
+  tipoSel.addEventListener('change', updateHeridos);
 
   // === GEOLOCATION ===
   async function getLocation(){
@@ -185,6 +207,7 @@
     $('#requestId').value = uuid4();
     $('#timestamp').value = new Date().toISOString();
     updatePhoneUI();
+    updateHeridos();
     getLocation();
   });
 
@@ -192,9 +215,12 @@
   f.addEventListener('submit', async e=>{
     e.preventDefault();
 
-    // Validación básica del teléfono local
+    // Validaciones
     const localDigits = telInput.value.replace(/\D/g,'');
-    if(!$('#tipo').value){ setMsg('Selecciona el tipo de evento.','err'); $('#tipo').focus(); return; }
+    if(!tipoSel.value){ setMsg('Selecciona el tipo de evento.','err'); tipoSel.focus(); return; }
+    if(tipoSel.value.toLowerCase()==='accidente' && !heridosSel.value){
+      setMsg('Indica si hay heridos.','err'); heridosSel.focus(); return;
+    }
     if(!localDigits || !/^\d{6,11}$/.test(localDigits)){
       setMsg('Ingresa un número local válido (6 a 11 dígitos).','err'); telInput.focus(); return;
     }
@@ -209,11 +235,12 @@
       requestId: $('#requestId').value || uuid4(),
       timestamp: new Date().toISOString(),
       nombre: $('#nombre').value.trim() || null,
-      // mantiene el mismo nombre "telefono" pero en formato internacional para no romper tu flujo
       telefono: telefonoIntl,
       telefonoLocal: localDigits,
       codigoPais: cc,
-      tipoEvento: $('#tipo').value,
+      tipoEvento: tipoSel.value,
+      hayHeridosTexto: heridosSel.value || null,
+      hayHeridos: heridosSel.value ? (heridosSel.value.toLowerCase()==='si') : null,
       detalle: $('#detalle').value.trim() || null,
       lat: $('#lat').value ? parseFloat($('#lat').value) : null,
       lng: $('#lng').value ? parseFloat($('#lng').value) : null,
@@ -242,6 +269,7 @@
       gpsStatus.textContent = 'GPS: sin capturar';
       updateMapLink(null,null);
       updatePhoneUI();
+      updateHeridos();
     }catch(err){
       clearTimeout(to);
       console.error(err);
@@ -256,6 +284,7 @@
     gpsStatus.textContent = 'GPS: sin capturar';
     updateMapLink(null,null);
     updatePhoneUI();
+    updateHeridos();
   });
   </script>
 </body>
