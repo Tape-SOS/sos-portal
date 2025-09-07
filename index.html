@@ -13,6 +13,11 @@
     }
     *{box-sizing:border-box}
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Arial,sans-serif;background:var(--bg);color:var(--fg);max-width:640px;margin:24px auto;padding:0 16px;line-height:1.35}
+    header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:14px 0}
+    .lang-switch{display:flex;gap:6px;flex-wrap:wrap}
+    .lang-btn{display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid #e0e0e0;border-radius:999px;background:#fff;cursor:pointer;font-size:.9rem}
+    .lang-btn.active{border-color:var(--accent)}
+    .flag{font-size:1.1rem;line-height:1}
     h1{font-size:1.4rem;margin:.5rem 0 1rem}
     form{border:1px solid #e6e6e6;border-radius:12px;padding:16px}
     label{display:block;margin:10px 0 6px;font-weight:600}
@@ -38,17 +43,27 @@
   </style>
 </head>
 <body>
-  <h1>Reportar evento SOS</h1>
-
-  <p class="hint">Comparte tu ubicación para enviar ayuda más rápido. Tus datos se usarán solo para gestionar este reporte.</p>
+  <header>
+    <div>
+      <h1 id="t_title">Reportar evento SOS</h1>
+      <p class="hint" id="t_intro">Comparte tu ubicación para enviar ayuda más rápido. Tus datos se usarán solo para gestionar este reporte.</p>
+    </div>
+    <nav class="lang-switch" aria-label="Idioma / Language">
+      <button class="lang-btn" data-lang="es" title="Español"><span class="flag">🇪🇸</span><span>ES</span></button>
+      <button class="lang-btn" data-lang="en" title="English"><span class="flag">🇺🇸</span><span>EN</span></button>
+      <button class="lang-btn" data-lang="pt" title="Português"><span class="flag">🇧🇷</span><span>PT</span></button>
+      <button class="lang-btn" data-lang="gn" title="Avañe'ẽ (Guaraní)"><span class="flag">🇵🇾</span><span>GN</span></button>
+      <button class="lang-btn" data-lang="de" title="Deutsch"><span class="flag">🇩🇪</span><span>DE</span></button>
+    </nav>
+  </header>
 
   <form id="f" novalidate aria-describedby="formHint">
     <div class="sr-only" id="formHint">Todos los campos marcados con * son obligatorios.</div>
 
-    <label for="nombre">Nombre</label>
+    <label for="nombre" id="lbl_nombre">Nombre</label>
     <input id="nombre" name="nombre" placeholder="Tu nombre" autocomplete="name" inputmode="text" maxlength="80"/>
 
-    <label class="req">Teléfono</label>
+    <label class="req" id="lbl_tel">Teléfono</label>
     <div class="row-tel">
       <select id="codPais" name="codPais" aria-label="Código de país">
         <option value="+595" selected>PY (+595)</option>
@@ -64,25 +79,26 @@
       Escribe solo el número local (sin 0, sin +). Se marcará como <code id="phonePreview">+595 981 123 456</code>.
     </div>
 
-    <label for="tipo" class="req">Tipo de evento</label>
+    <label for="tipo" class="req" id="lbl_tipo">Tipo de evento</label>
     <select id="tipo" name="tipo" required>
+      <!-- values internas estables; textos se traducen -->
       <option value="">Selecciona…</option>
-      <option>Accidente</option>
-      <option>Problema mecánico</option>
-      <option>Otro</option>
+      <option value="accidente">Accidente</option>
+      <option value="mecanico">Problema mecánico</option>
+      <option value="otro">Otro</option>
     </select>
 
     <!-- Campo condicional: ¿Hay heridos? -->
     <div id="grupoHeridos" hidden>
-      <label for="heridos" class="req">¿Hay heridos?</label>
+      <label for="heridos" class="req" id="lbl_heridos">¿Hay heridos?</label>
       <select id="heridos" name="heridos" aria-live="polite">
         <option value="">Selecciona…</option>
-        <option>Si</option>
-        <option>No</option>
+        <option value="si">Si</option>
+        <option value="no">No</option>
       </select>
     </div>
 
-    <label for="detalle">Detalle (opcional)</label>
+    <label for="detalle" id="lbl_detalle">Detalle (opcional)</label>
     <textarea id="detalle" name="detalle" rows="3" placeholder="Describe brevemente lo ocurrido (máx. 300 caracteres)" maxlength="300"></textarea>
 
     <div class="actions">
@@ -92,11 +108,11 @@
 
     <div class="row" aria-live="polite">
       <div>
-        <label for="lat">Latitud (auto)</label>
+        <label for="lat" id="lbl_lat">Latitud (auto)</label>
         <input id="lat" name="lat" placeholder="Latitud" readonly inputmode="numeric">
       </div>
       <div>
-        <label for="lng">Longitud (auto)</label>
+        <label for="lng" id="lbl_lng">Longitud (auto)</label>
         <input id="lng" name="lng" placeholder="Longitud" readonly inputmode="numeric">
       </div>
     </div>
@@ -111,11 +127,10 @@
     <p id="msg" role="status" aria-live="polite"></p>
     <input type="hidden" id="requestId">
     <input type="hidden" id="timestamp">
-    <!-- mapaUrl para enviar al flujo -->
     <input type="hidden" id="mapaUrl">
   </form>
 
-  <p class="footer">Si el formulario falla, llama al <strong>+595 XXX XXX</strong> o escribe por WhatsApp.</p>
+  <p class="footer" id="t_footer">Si el formulario falla, llama al <strong>+595 XXX XXX</strong> o escribe por WhatsApp.</p>
 
   <script>
   // === CONFIG ===
@@ -123,6 +138,185 @@
   const FETCH_TIMEOUT_MS = 12000;
   const GPS_TIMEOUT_MS = 10000;
   const GPS_MAX_AGE_MS = 15000;
+
+  // === I18N DICTIONARY ===
+  const I18N = {
+    es: {
+      title: "Reportar evento SOS",
+      intro: "Comparte tu ubicación para enviar ayuda más rápido. Tus datos se usarán solo para gestionar este reporte.",
+      formHint: "Todos los campos marcados con * son obligatorios.",
+      nombre: "Nombre",
+      telefono: "Teléfono",
+      telHint: "Escribe solo el número local (sin 0, sin +). Se marcará como",
+      tipo: "Tipo de evento",
+      tipo_opts: { blank:"Selecciona…", accidente:"Accidente", mecanico:"Problema mecánico", otro:"Otro" },
+      heridos: "¿Hay heridos?",
+      heridos_opts: { blank:"Selecciona…", si:"Sí", no:"No" },
+      detalle: "Detalle (opcional)",
+      detalle_ph: "Describe brevemente lo ocurrido (máx. 300 caracteres)",
+      btnUbic: "📍 Obtener ubicación",
+      gpsInit: "GPS: sin capturar",
+      gpsBusy: "GPS: buscando…",
+      gpsOk: acc => `GPS: OK (±${acc} m)`,
+      gpsErr: "No se pudo obtener tu ubicación. Puedes reintentar o enviar sin ubicación.",
+      lat: "Latitud (auto)",
+      lng: "Longitud (auto)",
+      mapText: "Ver ubicación en Google Maps ↗",
+      enviar: "Enviar",
+      limpiar: "Limpiar",
+      sending: "Enviando…",
+      msgOk: "¡Reporte enviado correctamente! La ayuda va en camino.",
+      msgPrep: "Preparando envío…",
+      msgTipoReq: "Selecciona el tipo de evento.",
+      msgHeridosReq: "Indica si hay heridos.",
+      msgTelReq: "Ingresa un número local válido (6 a 11 dígitos).",
+      ubicOk: "Ubicación capturada correctamente.",
+      ubicNoGeo: "Tu navegador no permite geolocalización.",
+      footer: "Si el formulario falla, llama al <strong>+595 XXX XXX</strong> o escribe por WhatsApp.",
+      name_ph: "Tu nombre",
+      phone_preview_prefix: ""
+    },
+    en: {
+      title: "Report SOS Event",
+      intro: "Share your location to send help faster. Your data is used only to manage this report.",
+      formHint: "All fields marked with * are required.",
+      nombre: "Name",
+      telefono: "Phone",
+      telHint: "Type only the local number (no 0, no +). It will be formatted as",
+      tipo: "Event type",
+      tipo_opts: { blank:"Select…", accidente:"Accident", mecanico:"Mechanical issue", otro:"Other" },
+      heridos: "Are there injuries?",
+      heridos_opts: { blank:"Select…", si:"Yes", no:"No" },
+      detalle: "Details (optional)",
+      detalle_ph: "Briefly describe what happened (max 300 characters)",
+      btnUbic: "📍 Get location",
+      gpsInit: "GPS: not captured",
+      gpsBusy: "GPS: locating…",
+      gpsOk: acc => `GPS: OK (±${acc} m)`,
+      gpsErr: "Could not get your location. You can retry or submit without it.",
+      lat: "Latitude (auto)",
+      lng: "Longitude (auto)",
+      mapText: "Open in Google Maps ↗",
+      enviar: "Submit",
+      limpiar: "Clear",
+      sending: "Sending…",
+      msgOk: "Report sent successfully! Help is on the way.",
+      msgPrep: "Preparing submission…",
+      msgTipoReq: "Select the event type.",
+      msgHeridosReq: "Please indicate if there are injuries.",
+      msgTelReq: "Enter a valid local number (6 to 11 digits).",
+      ubicOk: "Location captured successfully.",
+      ubicNoGeo: "Your browser does not allow geolocation.",
+      footer: "If the form fails, call <strong>+595 XXX XXX</strong> or send a WhatsApp message.",
+      name_ph: "Your name",
+      phone_preview_prefix: ""
+    },
+    pt: {
+      title: "Reportar ocorrência SOS",
+      intro: "Compartilhe sua localização para enviar ajuda mais rápido. Seus dados serão usados apenas para este reporte.",
+      formHint: "Todos os campos marcados com * são obrigatórios.",
+      nombre: "Nome",
+      telefono: "Telefone",
+      telHint: "Digite apenas o número local (sem 0, sem +). Será formatado como",
+      tipo: "Tipo de ocorrência",
+      tipo_opts: { blank:"Selecione…", accidente:"Acidente", mecanico:"Problema mecânico", otro:"Outro" },
+      heridos: "Há feridos?",
+      heridos_opts: { blank:"Selecione…", si:"Sim", no:"Não" },
+      detalle: "Detalhe (opcional)",
+      detalle_ph: "Descreva brevemente o ocorrido (máx. 300 caracteres)",
+      btnUbic: "📍 Obter localização",
+      gpsInit: "GPS: não capturado",
+      gpsBusy: "GPS: buscando…",
+      gpsOk: acc => `GPS: OK (±${acc} m)`,
+      gpsErr: "Não foi possível obter sua localização. Tente novamente ou envie sem localização.",
+      lat: "Latitude (auto)",
+      lng: "Longitude (auto)",
+      mapText: "Ver no Google Maps ↗",
+      enviar: "Enviar",
+      limpiar: "Limpar",
+      sending: "Enviando…",
+      msgOk: "Reporte enviado com sucesso! A ajuda está a caminho.",
+      msgPrep: "Preparando envio…",
+      msgTipoReq: "Selecione o tipo de ocorrência.",
+      msgHeridosReq: "Informe se há feridos.",
+      msgTelReq: "Digite um número local válido (6 a 11 dígitos).",
+      ubicOk: "Localização capturada com sucesso.",
+      ubicNoGeo: "Seu navegador não permite geolocalização.",
+      footer: "Se o formulário falhar, ligue para <strong>+595 XXX XXX</strong> ou envie WhatsApp.",
+      name_ph: "Seu nome",
+      phone_preview_prefix: ""
+    },
+    gn: {
+      title: "Emombe’u peteĩ mba’e oiko va’ekue (SOS)",
+      intro: "Emoherakuã ne renda ojejapo pya’e hag̃ua pytyvõ. Eipuruhína ko marandu pe reporte añoite guarã.",
+      formHint: "Umi tenda ijurujáva * rehegua oikotevẽ.",
+      nombre: "Téra",
+      telefono: "Pumbyry",
+      telHint: "Ehai añoite pe papapy renda rehegua (ani 0, ani +). Oñemoha’ãnga ko’ãichante",
+      tipo: "Mba’e oiko va’ekue",
+      tipo_opts: { blank:"Eiporavo…", accidente:"Jekaa", mecanico:"Apopyre jejavy", otro:"Ambue" },
+      heridos: "¿Iñapytyvõrãpa oĩ (oñembyai va’ekue)?",
+      heridos_opts: { blank:"Eiporavo…", si:"Héẽ", no:"Nahániri" },
+      detalle: "Mba’emimi (jepy’apeteĩ) ",
+      detalle_ph: "Emombe’u mbykymi mba’e oiko va’ekue (hetavévo 300 tai)",
+      btnUbic: "📍 Erekóta ne renda",
+      gpsInit: "GPS: ndaipóri gueteri",
+      gpsBusy: "GPS: oheka…",
+      gpsOk: acc => `GPS: oĩ porã (±${acc} m)`,
+      gpsErr: "Ndaikatúi ojuhu ne renda. Ikatu eha’ã jey térã emondo rendaha’ỹre.",
+      lat: "Latitud (auto)",
+      lng: "Longitud (auto)",
+      mapText: "Hecha Google Maps-pe ↗",
+      enviar: "Emondo",
+      limpiar: "Mopotĩ",
+      sending: "Oñemondo…",
+      msgOk: "Reporte oñemondóma porã! Oútama pytyvõ.",
+      msgPrep: "Oñembosako’i ñemondo…",
+      msgTipoReq: "Eiporavo mba’e oiko va’ekue.",
+      msgHeridosReq: "Emombe’u oĩpa oñembyai va’ekue.",
+      msgTelReq: "Ehai papapy renda hekopete (6 guive 11 papapy peve).",
+      ubicOk: "Renda ojepyta peteĩchapa.",
+      ubicNoGeo: "Ne kundahára ndohejáiri geolocalización.",
+      footer: "Ndohupytyrirõ pe kuatiañe’ẽ, ehenói <strong>+595 XXX XXX</strong>-pe térã emondo WhatsApp.",
+      name_ph: "Nde réra",
+      phone_preview_prefix: ""
+    },
+    de: {
+      title: "SOS-Ereignis melden",
+      intro: "Teile deinen Standort, damit Hilfe schneller gesendet werden kann. Deine Daten werden nur zur Bearbeitung dieser Meldung verwendet.",
+      formHint: "Alle mit * gekennzeichneten Felder sind Pflichtfelder.",
+      nombre: "Name",
+      telefono: "Telefon",
+      telHint: "Nur die lokale Nummer eingeben (ohne 0, ohne +). Sie wird formatiert als",
+      tipo: "Ereignistyp",
+      tipo_opts: { blank:"Auswählen…", accidente:"Unfall", mecanico:"Technisches Problem", otro:"Sonstiges" },
+      heridos: "Gibt es Verletzte?",
+      heridos_opts: { blank:"Auswählen…", si:"Ja", no:"Nein" },
+      detalle: "Details (optional)",
+      detalle_ph: "Beschreibe kurz, was passiert ist (max. 300 Zeichen)",
+      btnUbic: "📍 Standort ermitteln",
+      gpsInit: "GPS: nicht erfasst",
+      gpsBusy: "GPS: wird ermittelt…",
+      gpsOk: acc => `GPS: OK (±${acc} m)`,
+      gpsErr: "Standort konnte nicht ermittelt werden. Erneut versuchen oder ohne senden.",
+      lat: "Breite (auto)",
+      lng: "Länge (auto)",
+      mapText: "In Google Maps öffnen ↗",
+      enviar: "Senden",
+      limpiar: "Zurücksetzen",
+      sending: "Senden…",
+      msgOk: "Meldung erfolgreich gesendet! Hilfe ist unterwegs.",
+      msgPrep: "Sendevorgang wird vorbereitet…",
+      msgTipoReq: "Bitte Ereignistyp wählen.",
+      msgHeridosReq: "Bitte angeben, ob es Verletzte gibt.",
+      msgTelReq: "Gültige lokale Nummer eingeben (6–11 Ziffern).",
+      ubicOk: "Standort erfolgreich erfasst.",
+      ubicNoGeo: "Dein Browser erlaubt keine Geolokalisierung.",
+      footer: "Falls das Formular fehlschlägt, rufe <strong>+595 XXX XXX</strong> an oder schicke eine WhatsApp-Nachricht.",
+      name_ph: "Dein Name",
+      phone_preview_prefix: ""
+    }
+  };
 
   // === HELPERS ===
   const $ = sel => document.querySelector(sel);
@@ -148,9 +342,16 @@
     '+591': '7 6123456'
   };
 
-  function setMsg(text, kind=""){ msg.className = kind || "muted"; msg.textContent = text; }
-  function setSendingState(s){ btnEnviar.disabled = s; btnUbic.disabled = s; btnEnviar.innerHTML = s ? '<span class="spinner"></span> Enviando…' : 'Enviar'; }
+  // Estado de idioma
+  let LANG = localStorage.getItem('lang') || 'es';
+
+  function setMsg(text, kind=""){ msg.className = kind || "muted"; msg.innerHTML = text; }
+  function setSendingState(s, tSend){
+    btnEnviar.disabled = s; btnUbic.disabled = s;
+    btnEnviar.innerHTML = s ? `<span class="spinner"></span> ${tSend}` : getT('enviar');
+  }
   function uuid4(){ return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=crypto.getRandomValues(new Uint8Array(1))[0]&15;const v=c==='x'?r:(r&0x3|0x8);return v.toString(16);}); }
+  function getT(key){ const t = I18N[LANG]?.[key]; return (typeof t === 'string') ? t : ''; }
 
   function normalizePhone(local, cc){
     let n = (local||'').replace(/\D/g,'').replace(/^0+/, '');
@@ -163,38 +364,35 @@
     if(!telInput.value) telInput.placeholder = example;
     const digits = telInput.value.replace(/\D/g,'').replace(/^0+/, '');
     const pretty = digits.replace(/(\d{3,4})(?=\d)/g,'$1 ').trim();
-    phonePreview.textContent = cc + ' ' + (pretty || example);
+    // Tel hint + preview
+    $('#telHint').innerHTML = `${I18N[LANG].telHint} <code id="phonePreview">${cc} ${pretty || example}</code>.`;
   }
-
-  codeSelect.addEventListener('change', updatePhoneUI);
-  telInput.addEventListener('input', updatePhoneUI);
 
   // Campo condicional "¿Hay heridos?"
   function updateHeridos(){
-    const esAccidente = (tipoSel.value.toLowerCase() === 'accidente');
+    const esAccidente = (tipoSel.value === 'accidente');
     grupoHeridos.hidden = !esAccidente;
     heridosSel.required = esAccidente;
     if(!esAccidente){ heridosSel.value = ''; }
   }
-  tipoSel.addEventListener('change', updateHeridos);
 
   // GEOLOCATION
   async function getLocation(){
-    if(!('geolocation' in navigator)){ gpsStatus.textContent='GPS: no disponible'; setMsg('Tu navegador no permite geolocalización.','err'); return; }
-    gpsStatus.textContent='GPS: buscando…'; setMsg('Obteniendo ubicación…','muted');
-    const opts = { enableHighAccuracy:true, timeout:GPS_TIMEOUT_MS, maximumAge:GPS_MAX_AGE_MS };
+    if(!('geolocation' in navigator)){ gpsStatus.textContent = I18N[LANG].gpsInit; setMsg(I18N[LANG].ubicNoGeo,'err'); return; }
+    gpsStatus.textContent = I18N[LANG].gpsBusy; setMsg(I18N[LANG].gpsBusy,'muted');
+    const opts = { enableHighAccuracy:true, timeout: GPS_TIMEOUT_MS, maximumAge: GPS_MAX_AGE_MS };
     const p = new Promise((resolve,reject)=>{ navigator.geolocation.getCurrentPosition(resolve,reject,opts); });
     try{
       const pos = await p;
       const { latitude, longitude, accuracy } = pos.coords;
       $('#lat').value = latitude.toFixed(6);
       $('#lng').value = longitude.toFixed(6);
-      gpsStatus.textContent = `GPS: OK (±${Math.round(accuracy)} m)`;
+      gpsStatus.textContent = I18N[LANG].gpsOk(Math.round(accuracy));
       updateMapLink($('#lat').value,$('#lng').value);
-      setMsg('Ubicación capturada correctamente.','ok');
-    }catch(err){
-      gpsStatus.textContent = 'GPS: error';
-      setMsg('No se pudo obtener tu ubicación. Puedes reintentar o enviar sin ubicación.','err');
+      setMsg(I18N[LANG].ubicOk,'ok');
+    }catch{
+      gpsStatus.textContent = I18N[LANG].gpsInit;
+      setMsg(I18N[LANG].gpsErr,'err');
     }
   }
 
@@ -202,22 +400,93 @@
     if(lat && lng){
       const url = `https://www.google.com/maps?q=${lat},${lng}`;
       mapaLink.href = url;
+      mapaLink.textContent = I18N[LANG].mapText;
       mapaLink.hidden = false;
       mapaLink.classList.remove('muted');
-      mapaUrlHidden.value = url; // guardar para enviar al flujo
+      mapaUrlHidden.value = url;
     }else{
       mapaLink.hidden = true;
       mapaUrlHidden.value = "";
     }
   }
 
-  btnUbic.addEventListener('click', getLocation);
+  // === I18N APPLY ===
+  function applyLang(){
+    // <html lang="">
+    document.documentElement.setAttribute('lang', LANG);
+    // Títulos / textos
+    $('#t_title').textContent = I18N[LANG].title;
+    $('#t_intro').textContent = I18N[LANG].intro;
+    $('#formHint').textContent = I18N[LANG].formHint;
+    $('#lbl_nombre').textContent = I18N[LANG].nombre;
+    $('#lbl_tel').textContent = I18N[LANG].telefono;
+    $('#lbl_tipo').textContent = I18N[LANG].tipo;
+    $('#lbl_heridos').textContent = I18N[LANG].heridos;
+    $('#lbl_detalle').textContent = I18N[LANG].detalle;
+    $('#detalle').placeholder = I18N[LANG].detalle_ph;
+    $('#btnUbic').textContent = I18N[LANG].btnUbic;
+    gpsStatus.textContent = I18N[LANG].gpsInit;
+    $('#lbl_lat').textContent = I18N[LANG].lat;
+    $('#lbl_lng').textContent = I18N[LANG].lng;
+    $('#mapaLink').textContent = I18N[LANG].mapText;
+    btnEnviar.textContent = I18N[LANG].enviar;
+    $('#btnLimpiar').textContent = I18N[LANG].limpiar;
+    $('#t_footer').innerHTML = I18N[LANG].footer;
+    $('#nombre').placeholder = I18N[LANG].name_ph;
+
+    // Opciones de selects (tipo)
+    const optMap = I18N[LANG].tipo_opts;
+    const selectedTipo = tipoSel.value || '';
+    tipoSel.innerHTML = `
+      <option value="">${optMap.blank}</option>
+      <option value="accidente">${optMap.accidente}</option>
+      <option value="mecanico">${optMap.mecanico}</option>
+      <option value="otro">${optMap.otro}</option>
+    `;
+    tipoSel.value = selectedTipo;
+
+    // Opciones heridos
+    const hMap = I18N[LANG].heridos_opts;
+    const selHeridos = heridosSel.value || '';
+    heridosSel.innerHTML = `
+      <option value="">${hMap.blank}</option>
+      <option value="si">${hMap.si}</option>
+      <option value="no">${hMap.no}</option>
+    `;
+    heridosSel.value = selHeridos;
+
+    // Teléfono hint/preview
+    updatePhoneUI();
+    // Map link (si ya había coords)
+    updateMapLink($('#lat').value, $('#lng').value);
+
+    // Activar botón actual
+    document.querySelectorAll('.lang-btn').forEach(b=>{
+      b.classList.toggle('active', b.dataset.lang === LANG);
+    });
+  }
+
+  // === EVENTS ===
+  // Switch de idioma
+  document.querySelectorAll('.lang-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      LANG = btn.dataset.lang;
+      localStorage.setItem('lang', LANG);
+      applyLang();
+    });
+  });
+
+  codeSelect.addEventListener('change', updatePhoneUI);
+  telInput.addEventListener('input', updatePhoneUI);
+  tipoSel.addEventListener('change', ()=>{ updateHeridos(); });
+
+  $('#btnUbic').addEventListener('click', getLocation);
 
   // Intento automático al cargar
   window.addEventListener('load', ()=>{
     $('#requestId').value = uuid4();
     $('#timestamp').value = new Date().toISOString();
-    updatePhoneUI();
+    applyLang();      // aplicar idioma al entrar
     updateHeridos();
     getLocation();
   });
@@ -227,16 +496,16 @@
     e.preventDefault();
 
     const localDigits = telInput.value.replace(/\D/g,'');
-    if(!tipoSel.value){ setMsg('Selecciona el tipo de evento.','err'); tipoSel.focus(); return; }
-    if(tipoSel.value.toLowerCase()==='accidente' && !heridosSel.value){
-      setMsg('Indica si hay heridos.','err'); heridosSel.focus(); return;
+    if(!tipoSel.value){ setMsg(I18N[LANG].msgTipoReq,'err'); tipoSel.focus(); return; }
+    if(tipoSel.value === 'accidente' && !heridosSel.value){
+      setMsg(I18N[LANG].msgHeridosReq,'err'); heridosSel.focus(); return;
     }
     if(!localDigits || !/^\d{6,11}$/.test(localDigits)){
-      setMsg('Ingresa un número local válido (6 a 11 dígitos).','err'); telInput.focus(); return;
+      setMsg(I18N[LANG].msgTelReq,'err'); telInput.focus(); return;
     }
 
-    setSendingState(true);
-    setMsg('Preparando envío…');
+    setSendingState(true, I18N[LANG].sending);
+    setMsg(I18N[LANG].msgPrep,'muted');
 
     const cc = codeSelect.value;
     const telefonoIntl = normalizePhone(localDigits, cc);
@@ -251,13 +520,14 @@
       telefono: telefonoIntl,
       telefonoLocal: localDigits,
       codigoPais: cc,
-      tipoEvento: tipoSel.value,
-      HayHeridosTexto: heridosSel.value || null, // si tu columna es de Texto
-      HayHeridos: heridosSel.value ? (heridosSel.value.toLowerCase()==='si') : null, // si usas Sí/No
-      detalle: $('#detalle').value.trim() || "", // opcional: cadena vacía mejor que null
+      tipoEvento: tipoSel.value, // clave interna estable
+      HayHeridosTexto: heridosSel.value ? (heridosSel.value === 'si' ? I18N[LANG].heridos_opts.si : I18N[LANG].heridos_opts.no) : null,
+      HayHeridos: heridosSel.value ? (heridosSel.value === 'si') : null,
+      detalle: $('#detalle').value.trim() || "",
       lat: latV,
       lng: lngV,
-      mapaUrl: mapaUrlHidden.value || "", // <-- link listo para SharePoint
+      mapaUrl: $('#mapaUrl').value || "",
+      uiLang: LANG, // útil para auditoría
       userAgent: navigator.userAgent,
       online: navigator.onLine
     };
@@ -274,27 +544,28 @@
       });
       clearTimeout(to);
       if(!res.ok){ const t = await res.text().catch(()=> ''); throw new Error(`HTTP ${res.status}: ${t||'sin detalle'}`); }
-      setMsg('¡Reporte enviado correctamente! La ayuda va en camino.','ok');
-      setSendingState(false);
+      setMsg(I18N[LANG].msgOk,'ok');
+      setSendingState(false, I18N[LANG].sending);
       f.reset();
       $('#requestId').value = uuid4();
       $('#timestamp').value = new Date().toISOString();
-      gpsStatus.textContent = 'GPS: sin capturar';
+      gpsStatus.textContent = I18N[LANG].gpsInit;
       updateMapLink(null,null);
       updatePhoneUI();
       updateHeridos();
     }catch(err){
       clearTimeout(to);
       console.error(err);
-      setSendingState(false);
-      setMsg('No se pudo enviar. Verifica tu conexión y reintenta. Si persiste, llama al número de emergencia.','err');
+      setSendingState(false, I18N[LANG].sending);
+      // Mensaje de error genérico reutiliza el de GPS por brevedad, pero puedes crear uno específico
+      setMsg("No se pudo enviar. Verifica tu conexión y reintenta. / Could not send. Check your connection and try again.",'err');
     }
   });
 
   // Limpieza
   $('#btnLimpiar').addEventListener('click', ()=>{
-    setMsg('Formulario limpiado.','muted');
-    gpsStatus.textContent = 'GPS: sin capturar';
+    setMsg('', 'muted');
+    gpsStatus.textContent = I18N[LANG].gpsInit;
     updateMapLink(null,null);
     updatePhoneUI();
     updateHeridos();
