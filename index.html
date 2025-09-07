@@ -522,6 +522,7 @@
       codigoPais: cc,
       tipoEvento: tipoSel.value, // clave interna estable
       HayHeridosTexto: heridosSel.value ? (heridosSel.value === 'si' ? I18N[LANG].heridos_opts.si : I18N[LANG].heridos_opts.no) : null,
+      HayHeridosTextoEs: heridosSel.value ? (heridosSel.value === 'si' ? I18N.es.heridos_opts.si : I18N.es.heridos_opts.no) : null,
       HayHeridos: heridosSel.value ? (heridosSel.value === 'si') : null,
       detalle: $('#detalle').value.trim() || "",
       lat: latV,
