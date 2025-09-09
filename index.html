@@ -84,7 +84,7 @@
       <!-- values internas estables; textos se traducen -->
       <option value="">Selecciona…</option>
       <option value="accidente">Accidente</option>
-      <option value="Problema Mecánico">Problema mecánico</option>
+      <option value="mecanico">Problema mecánico</option>
       <option value="otro">Otro</option>
     </select>
 
@@ -149,7 +149,7 @@
       telefono: "Teléfono",
       telHint: "Escribe solo el número local (sin 0, sin +). Se marcará como",
       tipo: "Tipo de evento",
-      tipo_opts: { blank:"Selecciona…", accidente:"Accidente", Problema Mecánico:"Problema mecánico", otro:"Otro" },
+      tipo_opts: { blank:"Selecciona…", accidente:"Accidente", mecanico:"Problema mecánico", otro:"Otro" },
       heridos: "¿Hay heridos?",
       heridos_opts: { blank:"Selecciona…", si:"Sí", no:"No" },
       detalle: "Detalle (opcional)",
@@ -184,7 +184,7 @@
       telefono: "Phone",
       telHint: "Type only the local number (no 0, no +). It will be formatted as",
       tipo: "Event type",
-      tipo_opts: { blank:"Select…", accidente:"Accident", Problema Mecánico:"Mechanical issue", otro:"Other" },
+      tipo_opts: { blank:"Select…", accidente:"Accident", mecanico:"Mechanical issue", otro:"Other" },
       heridos: "Are there injuries?",
       heridos_opts: { blank:"Select…", si:"Yes", no:"No" },
       detalle: "Details (optional)",
@@ -219,7 +219,7 @@
       telefono: "Telefone",
       telHint: "Digite apenas o número local (sem 0, sem +). Será formatado como",
       tipo: "Tipo de ocorrência",
-      tipo_opts: { blank:"Selecione…", accidente:"Acidente", Problema Mecánico:"Problema mecânico", otro:"Outro" },
+      tipo_opts: { blank:"Selecione…", accidente:"Acidente", mecanico:"Problema mecânico", otro:"Outro" },
       heridos: "Há feridos?",
       heridos_opts: { blank:"Selecione…", si:"Sim", no:"Não" },
       detalle: "Detalhe (opcional)",
@@ -254,7 +254,7 @@
       telefono: "Pumbyry",
       telHint: "Ehai añoite pe papapy renda rehegua (ani 0, ani +). Oñemoha’ãnga ko’ãichante",
       tipo: "Mba’e oiko va’ekue",
-      tipo_opts: { blank:"Eiporavo…", accidente:"Jekaa", Problema Mecánico:"Apopyre jejavy", otro:"Ambue" },
+      tipo_opts: { blank:"Eiporavo…", accidente:"Jekaa", mecanico:"Apopyre jejavy", otro:"Ambue" },
       heridos: "¿Iñapytyvõrãpa oĩ (oñembyai va’ekue)?",
       heridos_opts: { blank:"Eiporavo…", si:"Héẽ", no:"Nahániri" },
       detalle: "Mba’emimi (jepy’apeteĩ) ",
@@ -289,7 +289,7 @@
       telefono: "Telefon",
       telHint: "Nur die lokale Nummer eingeben (ohne 0, ohne +). Sie wird formatiert als",
       tipo: "Ereignistyp",
-      tipo_opts: { blank:"Auswählen…", accidente:"Unfall", Problema Mecánico:"Technisches Problem", otro:"Sonstiges" },
+      tipo_opts: { blank:"Auswählen…", accidente:"Unfall", mecanico:"Technisches Problem", otro:"Sonstiges" },
       heridos: "Gibt es Verletzte?",
       heridos_opts: { blank:"Auswählen…", si:"Ja", no:"Nein" },
       detalle: "Details (optional)",
@@ -440,7 +440,7 @@
     tipoSel.innerHTML = `
       <option value="">${optMap.blank}</option>
       <option value="accidente">${optMap.accidente}</option>
-      <option value="Problema Mecánico">${optMap.Problema Mecánico}</option>
+      <option value="mecanico">${optMap.mecanico}</option>
       <option value="otro">${optMap.otro}</option>
     `;
     tipoSel.value = selectedTipo;
