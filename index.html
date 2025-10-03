@@ -40,6 +40,29 @@
     .footer{margin-top:14px;font-size:.85rem;color:var(--muted)}
     .spinner{inline-size:1em;block-size:1em;border:.18em solid #ccc;border-right-color:transparent;border-radius:50%;display:inline-block;vertical-align:-.2em;animation:s 0.8s linear infinite}
     @keyframes s{to{transform:rotate(1turn)}}
+
+    /* Barra de íconos sociales */
+    .social {
+      margin-top: 12px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .social a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid #e0e0e0;
+      text-decoration: none;
+    }
+    .social a:hover { box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 25%, transparent); }
+    .social svg { width: 18px; height: 18px; }
+    @media (prefers-color-scheme: dark){
+      .social a { background:#1b1b1b; border-color:#333; }
+    }
   </style>
 </head>
 <body>
@@ -132,6 +155,22 @@
 
   <p class="footer" id="t_footer">Si el formulario falla, llama al <strong>+595 973 500767</strong> o escribe por WhatsApp haciendo <strong>clic aquí</strong>.</p>
 
+  <!-- Barra de íconos sociales -->
+  <div class="social" aria-label="Redes sociales">
+    <!-- Instagram -->
+    <a href="https://www.instagram.com/tapeporapy/?hl=es" target="_blank" rel="noopener" aria-label="Instagram">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm10 2H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3zm-5 3.5A5.5 5.5 0 1 1 6.5 13 5.5 5.5 0 0 1 12 7.5zm0 2A3.5 3.5 0 1 0 15.5 13 3.5 3.5 0 0 0 12 9.5zM17.8 6.2a1 1 0 1 1-1.6 1.2 1 1 0 0 1 1.6-1.2z"/>
+      </svg>
+    </a>
+    <!-- Facebook -->
+    <a href="https://www.facebook.com/tapepora/?locale=es_LA" target="_blank" rel="noopener" aria-label="Facebook">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.7-3.9 1.1 0 2.2.2 2.2.2v2.4h-1.2c-1.2 0-1.6.8-1.6 1.5V12h2.8l-.45 2.9h-2.35v7A10 10 0 0 0 22 12z"/>
+      </svg>
+    </a>
+  </div>
+
   <script>
   // === CONFIG ===
   const endpoint = "https://default688a0fce5571499b9b5a8fef12ae5c.08.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/540a67fb821042ce9a9c009ac064975c/triggers/manual/paths/invoke/?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=b3_sZEJJEMWiK_myP_QktIK34z9U2pcPjhTJX0GukK8"; // tu endpoint de Power Automate
@@ -172,7 +211,7 @@
       msgTelReq: "Ingresa un número local válido (6 a 11 dígitos).",
       ubicOk: "Ubicación capturada correctamente.",
       ubicNoGeo: "Tu navegador no permite geolocalización.",
-      footer: "Si el formulario falla, llama al <strong>+595 973 500767</strong> o escribe por WhatsApp haciendo <strong>clic aquí</strong>.",
+      footer: 'Si el formulario falla, llama al <strong>+595 973 500767</strong> o escribe por WhatsApp haciendo <a href="https://api.whatsapp.com/send?phone=595973500767&text=%C2%A1Hola!%20Escribo%20para%20solicitar%20asistencia%20%F0%9F%86%98" target="_blank" rel="noopener"><strong>clic aquí</strong></a>.',
       name_ph: "Tu nombre",
       phone_preview_prefix: ""
     },
@@ -207,7 +246,7 @@
       msgTelReq: "Enter a valid local number (6 to 11 digits).",
       ubicOk: "Location captured successfully.",
       ubicNoGeo: "Your browser does not allow geolocation.",
-      footer: "If the form fails, call <strong>+595 973 500767</strong> or send a WhatsApp message. <strong>Click here</strong>.",
+      footer: 'If the form fails, call <strong>+595 973 500767</strong> or send a WhatsApp message: <a href="https://api.whatsapp.com/send?phone=595973500767&text=%C2%A1Hola!%20Escribo%20para%20solicitar%20asistencia%20%F0%9F%86%98" target="_blank" rel="noopener"><strong>Click here</strong></a>.',
       name_ph: "Your name",
       phone_preview_prefix: ""
     },
@@ -242,13 +281,13 @@
       msgTelReq: "Digite um número local válido (6 a 11 dígitos).",
       ubicOk: "Localização capturada com sucesso.",
       ubicNoGeo: "Seu navegador não permite geolocalização.",
-      footer: "Se o formulário falhar, ligue para <strong>+595 973 500767</strong> ou envie WhatsApp <strong>clicando aqui</strong>.",
+      footer: 'Se o formulário falhar, ligue para <strong>+595 973 500767</strong> ou envie uma mensagem no WhatsApp <a href="https://api.whatsapp.com/send?phone=595973500767&text=%C2%A1Hola!%20Escribo%20para%20solicitar%20asistencia%20%F0%9F%86%98" target="_blank" rel="noopener"><strong>clicando aqui</strong></a>.',
       name_ph: "Seu nome",
       phone_preview_prefix: ""
     },
     gn: {
       title: "Emombe’u peteĩ mba’e oiko va’ekue (SOS)",
-      intro: "Emoherakuã ne renda ojejapo pya’e hag̃ua pytyvõ. Eipuruhína ko marandu pe reporte añoite guarã.",
+      intro: "Emoherakuã ne renda ojejapo pya’eಗಾಗಿ pytyvõ. Eipuruhína ko marandu pe reporte añoite guarã.",
       formHint: "Umi tenda ijurujáva * rehegua oikotevẽ.",
       nombre: "Téra",
       telefono: "Pumbyry",
@@ -277,7 +316,7 @@
       msgTelReq: "Ehai papapy renda hekopete (6 guive 11 papapy peve).",
       ubicOk: "Renda ojepyta peteĩchapa.",
       ubicNoGeo: "Ne kundahára ndohejáiri geolocalización.",
-      footer: "Ndohupytyrirõ pe kuatiañe’ẽ, ehenói <strong>+595 973 500767</strong>-pe térã emondo WhatsApp <strong>clic ápe</strong>.",
+      footer: 'Ndohupytyrirõ pe kuatiañe’ẽ, ehenói <strong>+595 973 500767</strong>-pe térã emondo WhatsApp <a href="https://api.whatsapp.com/send?phone=595973500767&text=%C2%A1Hola!%20Escribo%20para%20solicitar%20asistencia%20%F0%9F%86%98" target="_blank" rel="noopener"><strong>clic ápe</strong></a>.',
       name_ph: "Nde réra",
       phone_preview_prefix: ""
     },
@@ -312,7 +351,7 @@
       msgTelReq: "Gültige lokale Nummer eingeben (6–11 Ziffern).",
       ubicOk: "Standort erfolgreich erfasst.",
       ubicNoGeo: "Dein Browser erlaubt keine Geolokalisierung.",
-      footer: "Falls das Formular fehlschlägt, rufe <strong>+595 973 500767</strong> an oder schicke eine WhatsApp-Nachricht indem Sie<strong>hier klicken</strong>.",
+      footer: 'Falls das Formular fehlschlägt, rufe <strong>+595 973 500767</strong> an oder schicke eine WhatsApp-Nachricht: <a href="https://api.whatsapp.com/send?phone=595973500767&text=%C2%A1Hola!%20Escribo%20para%20solicitar%20asistencia%20%F0%9F%86%98" target="_blank" rel="noopener"><strong>hier klicken</strong></a>.',
       name_ph: "Dein Name",
       phone_preview_prefix: ""
     }
@@ -412,9 +451,7 @@
 
   // === I18N APPLY ===
   function applyLang(){
-    // <html lang="">
     document.documentElement.setAttribute('lang', LANG);
-    // Títulos / textos
     $('#t_title').textContent = I18N[LANG].title;
     $('#t_intro').textContent = I18N[LANG].intro;
     $('#formHint').textContent = I18N[LANG].formHint;
@@ -455,19 +492,15 @@
     `;
     heridosSel.value = selHeridos;
 
-    // Teléfono hint/preview
     updatePhoneUI();
-    // Map link (si ya había coords)
     updateMapLink($('#lat').value, $('#lng').value);
 
-    // Activar botón actual
     document.querySelectorAll('.lang-btn').forEach(b=>{
       b.classList.toggle('active', b.dataset.lang === LANG);
     });
   }
 
   // === EVENTS ===
-  // Switch de idioma
   document.querySelectorAll('.lang-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       LANG = btn.dataset.lang;
@@ -482,11 +515,10 @@
 
   $('#btnUbic').addEventListener('click', getLocation);
 
-  // Intento automático al cargar
   window.addEventListener('load', ()=>{
     $('#requestId').value = uuid4();
     $('#timestamp').value = new Date().toISOString();
-    applyLang();      // aplicar idioma al entrar
+    applyLang();
     updateHeridos();
     getLocation();
   });
@@ -520,7 +552,7 @@
       telefono: telefonoIntl,
       telefonoLocal: localDigits,
       codigoPais: cc,
-      tipoEvento: tipoSel.value, // clave interna estable
+      tipoEvento: tipoSel.value,
       HayHeridosTexto: heridosSel.value ? (heridosSel.value === 'si' ? I18N[LANG].heridos_opts.si : I18N[LANG].heridos_opts.no) : null,
       HayHeridosTextoEs: heridosSel.value ? (heridosSel.value === 'si' ? I18N.es.heridos_opts.si : I18N.es.heridos_opts.no) : null,
       HayHeridos: heridosSel.value ? (heridosSel.value === 'si') : null,
@@ -528,7 +560,7 @@
       lat: latV,
       lng: lngV,
       mapaUrl: $('#mapaUrl').value || "",
-      uiLang: LANG, // útil para auditoría
+      uiLang: LANG,
       userAgent: navigator.userAgent,
       online: navigator.onLine
     };
@@ -558,7 +590,6 @@
       clearTimeout(to);
       console.error(err);
       setSendingState(false, I18N[LANG].sending);
-      // Mensaje de error genérico reutiliza el de GPS por brevedad, pero puedes crear uno específico
       setMsg("No se pudo enviar. Verifica tu conexión y reintenta. / Could not send. Check your connection and try again.",'err');
     }
   });
